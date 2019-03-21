@@ -1,0 +1,19 @@
+# vscode
+.vscode
+/.idea/
+jsconfig.json
+# 项目生成的打包目录
+output
+dist
+
+package-lock.json
+
+# Dependency directories
+node_modules
+
+#mac
+.DS_Store
+
+#eslint
+.eslintcache
+
