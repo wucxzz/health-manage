@@ -14,7 +14,7 @@ export default class App extends React.Component{
     return (
       <div className="layout">
         <br/> <br/> <br/>
-        <Link to="/statistics">点我进入数据统计页面</Link>
+        <Link to="/statistics">点我进入</Link>
       </div>
     );
   }
