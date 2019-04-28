@@ -1,9 +1,9 @@
 import React from 'react'
-import './BloodPressure.less'
+import '../common/common.less'
 import { DatePicker, List, Toast } from 'antd-mobile'
 import API from '../../components/httpAPI'
 import echarts from 'echarts'
-import ChoiceBtn from '../common/ChoiceBtn'
+import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
@@ -11,7 +11,6 @@ const now = new Date(nowTimeStamp);
 const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
 let minDate = new Date(nowTimeStamp - 1e7);
 const maxDate = new Date(nowTimeStamp + 1e7);
-console.log(minDate, maxDate);
 if (minDate.getDate() !== maxDate.getDate()) {
   // set the minDate to the 0 of maxDate
   minDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
@@ -109,20 +108,7 @@ export default class BloodPressure extends React.Component{
           }
         }
       },
-      series: [
-        {                       // 这个需要设置
-          markLine: {
-            data: [
-              { name: '标线1起点', yAxis: 1.7},
-              { name: '标线1终点', yAxis: 2},
-            ],
-            lineStyle: {
-              type: 'solid',
-              color: '#666666',
-            },
-          }
-        }
-      ], 
+      series: [],                       // 这个需要设置
     }
 
     let xAxisData   = [];   // X轴的数据

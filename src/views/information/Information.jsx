@@ -43,18 +43,18 @@ export default class Information extends React.Component{
     const foodData = [
       {label: '正常', value: 0},
       {label: '荤食为主', value: 1},
-      {label: '素食为主', value: 0},
-      {label: '嗜油', value: 0},
-      {label: '嗜盐', value: 0},
-      {label: '嗜糖', value: 0}
+      {label: '素食为主', value: 2},
+      {label: '嗜油', value: 3},
+      {label: '嗜盐', value: 4},
+      {label: '嗜糖', value: 5}
     ];
     const healthData = [
       {label: '健康', value: 0},
       {label: '高血压', value: 1},
-      {label: '糖尿病', value: 0}
+      {label: '糖尿病', value: 2}
     ];
     return (
-      <div className="layout">
+      <div className="information-layout">
         <div className="form-wrapper">
           <div className="inputItem">
             <span>姓名</span>
@@ -99,7 +99,7 @@ export default class Information extends React.Component{
             <input className="input" type="text"/>
           </div>
           <Picker 
-            data={foodData} 
+            data={healthData} 
             cols={1} 
             value={this.state.asyncValue}
             onPickerChange={this.onPickerChange}
@@ -124,7 +124,7 @@ export default class Information extends React.Component{
             <input className="input" type="text"/>
           </div>
           <Picker 
-            data={healthData} 
+            data={foodData} 
             cols={1} 
             value={this.state.asyncValue}
             onPickerChange={this.onPickerChange}
