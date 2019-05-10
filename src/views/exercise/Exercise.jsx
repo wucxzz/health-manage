@@ -7,8 +7,6 @@ import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
-// GMT is not currently observed in the UK. So use UTC now.
-const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
 let minDate = new Date(nowTimeStamp - 1e7);
 const maxDate = new Date(nowTimeStamp + 1e7);
 if (minDate.getDate() !== maxDate.getDate()) {
@@ -20,20 +18,19 @@ export default class Exercise extends React.Component{
     super(props);
     this.state = {
       date: now,
-      asyncValue: 1,
+      type: [0],
+      intensity: [1]
     };
 
   }
 
   componentDidMount() {
     this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
-
-    API.statistics.getStatisticsDetail(1)
+    API.health.exerciseGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0 && res.data.msg === 'SUCCESS') {
+        if (res.data.code === 0) {
           // // 处理数据，同时渲染图表
           this.processDetailResult(res.data.data);
-          console.log(res.data.data)
         } else {
           console.error('获取图表数据失败！');
           Toast.fail('获取图表数据失败!', 3);
@@ -73,8 +70,11 @@ export default class Exercise extends React.Component{
         // splitLine: { show: true, },
         axisLabel: {
           textStyle: {
-            fontSize: 10
-          }
+            fontSize: 12
+          },
+          formatter: function(value){
+            return value.split("").join("\n");
+          },
         }
       },  
       yAxis : {                          // Y轴信息
@@ -102,50 +102,96 @@ export default class Exercise extends React.Component{
       }
     };
     // 填充X轴数据
-    if (data.currDetail[0]) {
-      option.xAxis.data.push(data.currDate)
-      option.series.data.push(data.currDetail[0].amount)
+    for (var i = 0; i < data.length; i++) {
+      if (data[i]) {
+        switch (data[i].type) {
+          case 0:
+          option.xAxis.data.push('走路');
+          break;
+          case 1:
+          option.xAxis.data.push('跑步');
+          break;
+          case 2:
+          option.xAxis.data.push('骑自行车');
+          break;
+          case 3:
+          option.xAxis.data.push('游泳');
+          break;
+          case 4:
+          option.xAxis.data.push('瑜伽');
+          break;
+          case 5:
+          option.xAxis.data.push('广场舞');
+          break;
+          default:
+          option.xAxis.data.push('其他');
+        }
+        option.series.data.push(data[i].ctime)
+      }
     }
-    if (data.momDetail[0]) {
-      option.xAxis.data.push(data.momDate)
-      option.series.data.push(data.momDetail[0].amount)
-    }
-    if (data.yoyDetail[0]) {
-      option.xAxis.data.push(data.yoyDate)
-      option.series.data.push(data.yoyDetail[0].amount)
-    }
-    if (data.currDetail[0]) {
-      option.xAxis.data.push(data.currDate)
-      option.series.data.push(data.currDetail[0].amount)
-    }
-    if (data.momDetail[0]) {
-      option.xAxis.data.push(data.momDate)
-      option.series.data.push(data.momDetail[0].amount)
-    }
-    if (data.yoyDetail[0]) {
-      option.xAxis.data.push(data.yoyDate)
-      option.series.data.push(data.yoyDetail[0].amount)
-    }
-    console.log(option.xAxis.data)
     this.chartsContainer.setOption(option, true);
   }
 
   clickChoiceBtn = (type) => {
-    console.log(type)
+    API.health.exerciseGet({timeType: type})
+      .then( res => {
+        if (res.data.code === 0) {
+          // // 处理数据，同时渲染图表
+          this.processDetailResult(res.data.data);
+        } else {
+          console.error('获取图表数据失败！');
+          Toast.fail('获取图表数据失败!', 3);
+        }
+      })
+      .catch(err => {
+        console.error('服务器出错获取图表数据失败');
+        Toast.fail('服务器错误!获取图表数据失败!', 3);
+      })
   }
 
-  onClick = () => {
-    console.log(9999)
-  };
-  onPickerChange = (val) => {
-    console.log(val);
-    const asyncValue = [...val];
-    console.log(asyncValue)
-    this.setState({
-      asyncValue,
-    });
-  };
+  exerciseSave = () => {
+    let value = this.state.date;
+    let vmonth = value.getMonth() + 1 < 10 ? '0' + (value.getMonth() + 1) : value.getMonth() + 1;
+    let vdate = value.getDate() < 10 ? '0' + value.getDate() : value.getDate();
+    let num = document.getElementsByClassName('input')[0].value;
+    if (!num) {
+      Toast.fail('数据输入不正确!', 1);
+    } else {
+      let param = {
+        time: '' + value.getFullYear() + vmonth + vdate,
+        type: this.state.type[0],
+        strength: this.state.intensity[0],
+        ctime: num
+      }
+      API.health.weightSave(param)
+        .then(res => {
+          if (res.data.code == 0) {
+            Toast.info('保存成功!', 1);
+            this.cancel();
+          } else {
+            console.error('传输数据失败！');
+            Toast.fail('保存数据失败!', 3);
+          }
+        })
+        .catch(err => {
+          console.error('服务器出错，数据传输失败');
+          Toast.fail('服务器错误!', 2);
+        })
+    }
+  }
 
+  routeToTip = () => {
+    this.props.history.push('/daily');
+  }
+  routeToFile = () => {
+    this.props.history.push('/daily');
+  }
+  cancel = () => {
+    let inpList = document.getElementsByClassName('input');
+    for(var i = 0; i < inpList.length; i++) {
+      inpList[i].value = null;
+    }
+  }
 
   render() {
     const exerciseData = [
@@ -176,35 +222,33 @@ export default class Exercise extends React.Component{
           <Picker 
             data={exerciseData} 
             cols={1} 
-            value={this.state.asyncValue}
-            onPickerChange={this.onPickerChange}
-            onOk={v => console.log(v)}
+            value={this.state.type}
+            onOk={type => this.setState({ type })}
           >
-            <List.Item arrow="horizontal" onClick={this.onClick}>运动类型</List.Item>
+            <List.Item arrow="horizontal">运动类型</List.Item>
           </Picker>
           <Picker 
             data={intensityData} 
             cols={1} 
-            value={this.state.asyncValue}
-            onPickerChange={this.onPickerChange}
-            onOk={v => console.log(v)}
+            value={this.state.intensity}
+            onOk={intensity => this.setState({ intensity })}
           >
-            <List.Item arrow="horizontal" onClick={this.onClick}>运动强度</List.Item>
+            <List.Item arrow="horizontal">运动强度</List.Item>
           </Picker>
           <div className="inputItem">
             <span>持续时间(分)</span>
-            <input className="input" type="text"/>
+            <input className="input" type="number"/>
           </div>
           <div className="button-wrap button-wrap-cover">
-            <span className="button-item">取消</span>
-            <span>保存</span>
+            <span className="button-item" onClick={this.cancel}>取消</span>
+            <span onClick={this.exerciseSave}>保存</span>
           </div>
           <div className="img-button">
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToTip}>
               <img src={require('../../assets/images/tips.png')} alt=""/>
               提醒设置
             </span>
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToFile}>
               <img src={require('../../assets/images/file.png')} alt=""/>
               健康档案
             </span>
@@ -212,7 +256,7 @@ export default class Exercise extends React.Component{
         </div>
 
         <div className="chart">
-          <ChoiceBtn defaultActive={'1'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
+          <ChoiceBtn defaultActive={'0'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
           <div id="echartsLine"></div>
         </div>
       </div>
