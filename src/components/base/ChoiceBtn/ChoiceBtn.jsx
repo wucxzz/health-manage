@@ -23,14 +23,14 @@ export default class ChoiceBtn extends React.Component {
   render() {
     return (
       <div className="choice-btn" onClick={this.clickBtn}>
+        <div className={(this.state.active === '0' ? 'active' : '')}
+            data-active={0}
+          >{this.props.data[0]}</div>
         <div className={(this.state.active === '1' ? 'active' : '')}
             data-active={1}
-          >{this.props.data[0]}</div>
+          >{this.props.data[1]}</div>
         <div className={(this.state.active === '2' ? 'active' : '')}
             data-active={2}
-          >{this.props.data[1]}</div>
-        <div className={(this.state.active === '3' ? 'active' : '')}
-            data-active={3}
           >{this.props.data[2]}</div>
       </div>
     )
