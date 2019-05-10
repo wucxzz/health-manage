@@ -7,8 +7,6 @@ import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
-// GMT is not currently observed in the UK. So use UTC now.
-const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
 let minDate = new Date(nowTimeStamp - 1e7);
 const maxDate = new Date(nowTimeStamp + 1e7);
 if (minDate.getDate() !== maxDate.getDate()) {
@@ -26,13 +24,11 @@ export default class BloodPressure extends React.Component{
 
   componentDidMount() {
     this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
-
-    API.statistics.getStatisticsDetail(1)
+    API.health.pressureGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0 && res.data.msg === 'SUCCESS') {
+        if (res.data.code === 0) {
           // // 处理数据，同时渲染图表
           this.processDetailResult(res.data.data);
-          console.log(res.data.data)
         } else {
           console.error('获取图表数据失败！');
           Toast.fail('获取图表数据失败!', 3);
@@ -116,25 +112,21 @@ export default class BloodPressure extends React.Component{
     // 图表的每一个数据格式： { name: '', type: 'line', smooth: true, color: '', data: [] }
     const seriesItem = { type: 'line', }; // smooth: true 线是圆滑的
     // 处理X轴数据
-    let useIndex = { length: data.currDetail.length || 0, index : 'currDetail' };
-    if (data.momDetail && useIndex.length < data.momDetail.length) {
-      useIndex.length = data.momDetail.length;
-      useIndex.index  = 'momDetail';
+    let useIndex = { length: data.high.length || 0, index : 'high' };
+    if (data.low && useIndex.length < data.low.length) {
+      useIndex.length = data.low.length;
+      useIndex.index  = 'low';
     }
-    if (data.yoyDetail && useIndex.length <= data.yoyDetail.length) {
-      useIndex.length = data.yoyDetail.length;
-      useIndex.index  = 'yoyDetail';
-    }
-    data[useIndex.index].forEach(e => { xAxisData.push(e.timeStart) });
+    data[useIndex.index].forEach(e => { xAxisData.push(e.time) });
     // 处理每条数据
-    if (data.currDate) {  // 当前
+    if (data.high) {  // 当前
       const item  = {...seriesItem}
       item.name   = '收缩压';
       item.data   = [];
       item.symbol = 'none';
       item.markLine = {
         data: [
-          { name: '标线1', yAxis: 1.5},
+          { name: '标线1', yAxis: 140},
         ],
         symbol: 'none',
         lineStyle: {
@@ -142,17 +134,17 @@ export default class BloodPressure extends React.Component{
           color: 'red',
         },
       };
-      data.currDetail.forEach( e => { item.data.push(e.amount) })
+      data.high.forEach( e => { item.data.push(e.num) })
       series.push(item)
     }
-    if (data.momDate) { // 环比
+    if (data.low) { // 环比
       const item  = {...seriesItem}
       item.name   = '舒张压';
       item.data   = [];
       item.symbol = 'none';
       item.markLine = {
         data: [
-          { name: '标线2', yAxis: 2},
+          { name: '标线2', yAxis: 90},
         ],
         symbol: 'none',
         lineStyle: {
@@ -160,7 +152,7 @@ export default class BloodPressure extends React.Component{
           color: 'red',
         },
       };
-      data.momDetail.forEach( e => { item.data.push(e.amount) })
+      data.low.forEach( e => { item.data.push(e.num) })
       series.push(item)
     }
     option.xAxis.data = xAxisData;
@@ -171,7 +163,66 @@ export default class BloodPressure extends React.Component{
   }
 
   clickChoiceBtn = (type) => {
-    console.log(type)
+    API.health.pressureGet({timeType: type})
+      .then( res => {
+        if (res.data.code === 0) {
+          // // 处理数据，同时渲染图表
+          this.processDetailResult(res.data.data);
+        } else {
+          console.error('获取图表数据失败！');
+          Toast.fail('获取图表数据失败!', 3);
+        }
+      })
+      .catch(err => {
+        console.error('服务器出错获取图表数据失败');
+        Toast.fail('服务器错误!获取图表数据失败!', 3);
+      })
+  }
+
+  savePressure = () => {
+    let state = 1;
+    let inpList = document.getElementsByClassName('input');
+    for(var i = 0; i < inpList.length; i++) {
+      if (!inpList[i].value) {
+        Toast.fail('数据输入不正确!', 1);
+        state = 0;
+      }
+    }
+    if (state) {
+      let param = {
+        time: this.state.date.valueOf(),
+        high: inpList[0].value,
+        low: inpList[1].value,
+        maibo: inpList[2].value
+      }
+      API.health.pressureSave(param)
+        .then(res => {
+          if (res.data.code == 0) {
+            Toast.info('保存成功!', 1);
+            this.cancel();
+          } else {
+            console.error('传输数据失败！');
+            Toast.fail('保存数据失败!', 3);
+          }
+        })
+        .catch(err => {
+          console.error('服务器出错，数据传输失败');
+          Toast.fail('服务器错误!', 2);
+        })
+    }
+  }
+
+  routeToTip = () => {
+    this.props.history.push('/daily');
+  }
+  routeToFile = () => {
+    this.props.history.push('/daily');
+  }
+  cancel = () => {
+    let inpList = document.getElementsByClassName('input');
+    for(var i = 0; i < inpList.length; i++) {
+      inpList[i].value = null;
+    }
   }
 
 
@@ -187,27 +238,27 @@ export default class BloodPressure extends React.Component{
           </DatePicker>
           <div className="inputItem">
             <span>收缩压(毫米汞柱)</span>
-            <input className="input" type="text"/>
+            <input className="input" type="number"/>
           </div>
           <div className="inputItem">
             <span>舒张压(毫米汞柱)</span>
-            <input className="input" type="text"/>
+            <input className="input" type="number"/>
           </div>
           <div className="inputItem">
             <span>脉搏(每分钟脉搏数)</span>
-            <input className="input" type="text"/>
+            <input className="input" type="number"/>
           </div>
           <div className="button-wrap">
-            <span className="button-item">取消</span>
-            <span>保存</span>
+            <span className="button-item" onClick={this.cancel}>取消</span>
+            <span onClick={this.savePressure}>保存</span>
             <span className="analysis">血压分析</span>
           </div>
           <div className="img-button">
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToTip}>
               <img src={require('../../assets/images/tips.png')} alt=""/>
               提醒设置
             </span>
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToFile}>
               <img src={require('../../assets/images/file.png')} alt=""/>
               健康档案
             </span>
@@ -215,7 +266,7 @@ export default class BloodPressure extends React.Component{
         </div>
 
         <div className="chart">
-          <ChoiceBtn defaultActive={'1'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
+          <ChoiceBtn defaultActive={'0'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
           <div id="echartsLine"></div>
         </div>
       </div>
