@@ -7,8 +7,6 @@ import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
-// GMT is not currently observed in the UK. So use UTC now.
-const utcNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
 let minDate = new Date(nowTimeStamp - 1e7);
 const maxDate = new Date(nowTimeStamp + 1e7);
 if (minDate.getDate() !== maxDate.getDate()) {
@@ -20,20 +18,18 @@ export default class Weight extends React.Component{
     super(props);
     this.state = {
       date: now,
-      asyncValue: 1,
+      bmi: null
     };
 
   }
 
   componentDidMount() {
     this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
-
-    API.statistics.getStatisticsDetail(1)
+    API.health.weightGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0 && res.data.msg === 'SUCCESS') {
+        if (res.data.code === 0) {
           // // 处理数据，同时渲染图表
           this.processDetailResult(res.data.data);
-          console.log(res.data.data)
         } else {
           console.error('获取图表数据失败！');
           Toast.fail('获取图表数据失败!', 3);
@@ -117,23 +113,14 @@ export default class Weight extends React.Component{
     // 图表的每一个数据格式： { name: '', type: 'line', smooth: true, color: '', data: [] }
     const seriesItem = { type: 'line', }; // smooth: true 线是圆滑的
     // 处理X轴数据
-    let useIndex = { length: data.currDetail.length || 0, index : 'currDetail' };
-    if (data.momDetail && useIndex.length < data.momDetail.length) {
-      useIndex.length = data.momDetail.length;
-      useIndex.index  = 'momDetail';
-    }
-    if (data.yoyDetail && useIndex.length <= data.yoyDetail.length) {
-      useIndex.length = data.yoyDetail.length;
-      useIndex.index  = 'yoyDetail';
-    }
-    data[useIndex.index].forEach(e => { xAxisData.push(e.timeStart) });
+    data.forEach(e => { xAxisData.push(e.time) });
     // 处理每条数据
-    if (data.currDate) {  // 当前
+    if (data) {  // 当前
       const item  = {...seriesItem}
       item.name   = '体重';
       item.data   = [];
       item.symbol = 'none';
-      data.currDetail.forEach( e => { item.data.push(e.amount) })
+      data.forEach( e => { item.data.push(e.num) })
       series.push(item)
     }
     option.xAxis.data = xAxisData;
@@ -144,7 +131,68 @@ export default class Weight extends React.Component{
   }
 
   clickChoiceBtn = (type) => {
-    console.log(type)
+    API.health.weightGet({timeType: type})
+      .then( res => {
+        if (res.data.code === 0) {
+          // // 处理数据，同时渲染图表
+          this.processDetailResult(res.data.data);
+        } else {
+          console.error('获取图表数据失败！');
+          Toast.fail('获取图表数据失败!', 3);
+        }
+      })
+      .catch(err => {
+        console.error('服务器出错获取图表数据失败');
+        Toast.fail('服务器错误!获取图表数据失败!', 3);
+      })
+  }
+
+  weightSave = () => {
+    let value = this.state.date;
+    let vmonth = value.getMonth() + 1 < 10 ? '0' + (value.getMonth() + 1) : value.getMonth() + 1;
+    let vdate = value.getDate() < 10 ? '0' + value.getDate() : value.getDate();
+    let weight = document.getElementsByClassName('input')[0].value;
+    if (!weight) {
+      Toast.fail('数据输入不正确!', 1);
+    } else {
+      let param = {
+        time: '' + value.getFullYear() + vmonth + vdate,
+        num: weight
+      }
+      API.health.weightSave(param)
+        .then(res => {
+          if (res.data.code == 0) {
+            this.setState({
+              bmi: res.data.data.BMI
+            })
+            Toast.info('保存成功!', 1);
+            this.cancel();
+          } else {
+            console.error('传输数据失败！');
+            Toast.fail('保存数据失败!', 3);
+          }
+        })
+        .catch(err => {
+          console.error('服务器出错，数据传输失败');
+          Toast.fail('服务器错误!', 2);
+        })
+    }
+  }
+
+  routeToTip = () => {
+    this.props.history.push('/daily');
+  }
+  routeToFile = () => {
+    this.props.history.push('/daily');
+  }
+  cancel = () => {
+    let inpList = document.getElementsByClassName('input');
+    for(var i = 0; i < inpList.length; i++) {
+      inpList[i].value = null;
+    }
+    this.setState({
+      bmi: null
+    })
   }
 
   render() {
@@ -160,21 +208,22 @@ export default class Weight extends React.Component{
           </DatePicker>
           <div className="inputItem">
             <span>体重(kg)</span>
-            <input className="input" type="text"/>
+            <input className="input" type="number"/>
           </div>
           <div className="bmi">
             <span>BMI</span>
+            <span className="bmi-output">{this.state.bmi}</span>
           </div>
           <div className="button-wrap button-wrap-cover">
-            <span className="button-item">取消</span>
-            <span>保存</span>
+            <span className="button-item" onClick={this.cancel}>取消</span>
+            <span onClick={this.weightSave}>保存</span>
           </div>
           <div className="img-button">
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToTip}>
               <img src={require('../../assets/images/tips.png')} alt=""/>
               提醒设置
             </span>
-            <span className="img-wrap">
+            <span className="img-wrap" onClick={this.routeToFile}>
               <img src={require('../../assets/images/file.png')} alt=""/>
               健康档案
             </span>
@@ -182,7 +231,7 @@ export default class Weight extends React.Component{
         </div>
 
         <div className="chart">
-          <ChoiceBtn defaultActive={'1'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
+          <ChoiceBtn defaultActive={'0'} clickBtn={this.clickChoiceBtn} data={['最近一月', '最近一季', '最近一年']} />
           <div id="echartsLine"></div>
         </div>
       </div>
