@@ -133,11 +133,51 @@ const common = {
   })
 }
 
+const health = {
+  pressureSave: wrap(function(params) {
+    return axios.post('/pressure/save', params)
+  }),
+  pressureGet: wrap(function(params) {
+    return axios.post('/pressure/get', params)
+  }),
+  sugarSave: wrap(function(params) {
+    return axios.post('/sugar/save', params)
+  }),
+  sugarGet: wrap(function(params) {
+    return axios.post('/sugar/get', params)
+  }),
+  weightSave: wrap(function(params) {
+    return axios.post('/weight/save', params)
+  }),
+  weightGet: wrap(function(params) {
+    return axios.post('/weight/get', params)
+  }),
+  exerciseSave: wrap(function(params) {
+    return axios.post('/exercise/save', params)
+  }),
+  exerciseGet: wrap(function(params) {
+    return axios.post('/exercise/get', params)
+  }),
+  yaoSave: wrap(function(params) {
+    return axios.post('/yao/save', params)
+  }),
+  yaoGet: wrap(function(params) {
+    return axios.post('/yao/get')
+  }),
+  userInfo: wrap(function(params) {
+    return axios.post('/user/info')
+  }),
+  userInfoUpdate: wrap(function(params) {
+    return axios.post('/user/info/update', params)
+  }),
+}
+
 
 export default {
   axios,
   rule,
   statistics,
   auth,
-  common
+  common,
+  health
 };
