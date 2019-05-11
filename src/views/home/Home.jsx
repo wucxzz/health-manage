@@ -14,7 +14,15 @@ export default class App extends React.Component{
     return (
       <div className="layout">
         <br/> <br/> <br/>
-        <Link to="/statistics">点我进入</Link>
+        <Link to="/information">信息</Link><br/>
+        <Link to="/bloodPressure">血压</Link><br/>
+        <Link to="/bloodSugar">血糖</Link><br/>
+        <Link to="/weight">体重</Link><br/>
+        <Link to="/exercise">运动</Link><br/>
+        <Link to="/daily">日常</Link><br/>
+        <Link to="/medicine">用药</Link><br/>
+        <Link to="/archives">档案</Link><br/>
+        <Link to="/remind">提醒</Link><br/>
       </div>
     );
   }
