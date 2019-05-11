@@ -7,15 +7,15 @@ module.exports = function () {
         "currTotal": 55801,
         "yoyTotal": 0,
         "momTotal": 0,
-        "currDate": "当期2018-11",
-        "yoyDate": "同比2017-11",
-        "momDate": "环比2018-10",
+        "currDate": "当期",
+        "yoyDate": "同比",
+        "momDate": "环比",
         "yoyRate": "-1222233121112%",
         "momRate": "-12345%",
         "currDetail": [
             {
                 "timeStart": 1,
-                "amount": 0
+                "amount": 15
             },
             {
                 "timeStart": 2,
@@ -97,7 +97,7 @@ module.exports = function () {
         "yoyDetail": [
             {
                 "timeStart": 1,
-                "amount": 0
+                "amount": 62
             },
             {
                 "timeStart": 2,
@@ -219,7 +219,7 @@ module.exports = function () {
         "momDetail": [
             {
                 "timeStart": 1,
-                "amount": 0
+                "amount": 26
             },
             {
                 "timeStart": 2,
