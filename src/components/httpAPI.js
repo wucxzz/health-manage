@@ -140,6 +140,9 @@ const health = {
   pressureGet: wrap(function(params) {
     return axios.post('/pressure/get', params)
   }),
+  heartGet: wrap(function(params) {
+    return axios.post('/heart/get', params)
+  }),
   sugarSave: wrap(function(params) {
     return axios.post('/sugar/save', params)
   }),
