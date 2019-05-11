@@ -21,20 +21,6 @@ export default class Daily extends React.Component{
 
   componentDidMount() {
 
-    API.statistics.getStatisticsDetail(1)
-      .then( res => {
-        if (res.data.code === 0 && res.data.msg === 'SUCCESS') {
-          // // 处理数据，同时渲染图表
-          console.log(res.data.data)
-        } else {
-          console.error('获取图表数据失败！');
-          Toast.fail('获取图表数据失败!', 3);
-        }
-      })
-      .catch(err => {
-        console.error('服务器出错获取图表数据失败');
-        Toast.fail('服务器错误!获取图表数据失败!', 3);
-      })
   }
 
   onClick = () => {
