@@ -33,6 +33,10 @@ export default class Daily extends React.Component{
       })
   }
 
+  deleteYao = (name) => {
+    console.log(name)
+  }
+
   setCardHtml = () => {
     let cardHtml;
     let yaoHtml;
@@ -101,6 +105,7 @@ export default class Daily extends React.Component{
                 <div>主治：{data.zhuzhi}</div>
                 <div>用法用量：{eatType}，每日{data.time}次，每次{Math.floor(data.num / 10) + unit}</div>
               </Card.Body>
+              <Card.Footer extra={<div onClick={this.deleteYao.bind(this, data.name)}>删除</div>} />
             </Card>
           </WingBlank>
         )
