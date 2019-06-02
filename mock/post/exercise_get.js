@@ -6,31 +6,31 @@ module.exports = function () {
     "data": 
       [
         {
-          "type": 0,
+          "type": '0',
           "ctime": 15
         },
         {
-            "type": 1,
+            "type": '1',
             "ctime": 15
         },
         {
-            "type": 2,
+            "type": '2',
             "ctime": 100
         },
         {
-            "type": 3,
+            "type": '3',
             "ctime": 100
         },
         {
-            "type": 4,
+            "type": '4',
             "ctime": 100
         },
         {
-            "type": 5,
+            "type": '5',
             "ctime": 100
         },
         {
-            "type": 6,
+            "type": '6',
             "ctime": 190
         },
     ]

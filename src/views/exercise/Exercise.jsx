@@ -4,6 +4,7 @@ import { DatePicker, List, Toast, Picker } from 'antd-mobile'
 import API from '../../components/httpAPI'
 import echarts from 'echarts'
 import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
+import Header from '../../components/base/Header/Header'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
@@ -18,18 +19,22 @@ export default class Exercise extends React.Component{
     super(props);
     this.state = {
       date: now,
-      type: [0],
-      intensity: [1]
+      type: ['0'],
+      intensity: ['1']
     };
 
   }
 
   componentDidMount() {
-    this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
+    this.getDataToProcess();
+  }
+
+  getDataToProcess = () => {
     API.health.exerciseGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -46,7 +51,7 @@ export default class Exercise extends React.Component{
   processDetailResult = (data) => {
     const option = {
       title: {
-        text: '体重趋势',
+        text: '运动趋势',
         left: 'center',
         textStyle: {
           color: '#5F6ABA',
@@ -105,22 +110,22 @@ export default class Exercise extends React.Component{
     for (var i = 0; i < data.length; i++) {
       if (data[i]) {
         switch (data[i].type) {
-          case 0:
+          case '0':
           option.xAxis.data.push('走路');
           break;
-          case 1:
+          case '1':
           option.xAxis.data.push('跑步');
           break;
-          case 2:
+          case '2':
           option.xAxis.data.push('骑自行车');
           break;
-          case 3:
+          case '3':
           option.xAxis.data.push('游泳');
           break;
-          case 4:
+          case '4':
           option.xAxis.data.push('瑜伽');
           break;
-          case 5:
+          case '5':
           option.xAxis.data.push('广场舞');
           break;
           default:
@@ -135,8 +140,9 @@ export default class Exercise extends React.Component{
   clickChoiceBtn = (type) => {
     API.health.exerciseGet({timeType: type})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -163,11 +169,11 @@ export default class Exercise extends React.Component{
         strength: this.state.intensity[0],
         ctime: num
       }
-      API.health.weightSave(param)
+      API.health.exerciseSave(param)
         .then(res => {
           if (res.data.code == 0) {
             Toast.info('保存成功!', 1);
-            this.cancel();
+            this.getDataToProcess();
           } else {
             console.error('传输数据失败！');
             Toast.fail('保存数据失败!', 3);
@@ -181,10 +187,10 @@ export default class Exercise extends React.Component{
   }
 
   routeToTip = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/remind');
   }
   routeToFile = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/archives');
   }
   cancel = () => {
     let inpList = document.getElementsByClassName('input');
@@ -195,22 +201,23 @@ export default class Exercise extends React.Component{
 
   render() {
     const exerciseData = [
-      {label: '走路', value: 0},
-      {label: '跑步', value: 1},
-      {label: '骑自行车', value: 2},
-      {label: '游泳', value: 3},
-      {label: '瑜伽', value: 4},
-      {label: '广场舞', value: 5},
-      {label: '其他', value: 6}
+      {label: '走路', value: '0'},
+      {label: '跑步', value: '1'},
+      {label: '骑自行车', value: '2'},
+      {label: '游泳', value: '3'},
+      {label: '瑜伽', value: '4'},
+      {label: '广场舞', value: '5'},
+      {label: '其他', value: '6'}
     ];
     const intensityData = [
-      {label: '高', value: 0},
-      {label: '中', value: 1},
-      {label: '低', value: 2}
+      {label: '高', value: '0'},
+      {label: '中', value: '1'},
+      {label: '低', value: '2'}
     ];
 
     return (
       <div className="layout">
+        <Header data={'运动管理'}></Header>
         <div className="message-input">
           <DatePicker
             mode="date"

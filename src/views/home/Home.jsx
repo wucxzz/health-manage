@@ -4,12 +4,8 @@ import { Link } from 'react-router-dom'
 export default class App extends React.Component{
   constructor(props) {
     super(props);
-    this.state = {
-
-    }
+    this.state = {};
   }
-
-
   render() {
     return (
       <div className="layout">
@@ -19,10 +15,10 @@ export default class App extends React.Component{
         <Link to="/bloodSugar">血糖</Link><br/>
         <Link to="/weight">体重</Link><br/>
         <Link to="/exercise">运动</Link><br/>
-        <Link to="/daily">日常</Link><br/>
         <Link to="/medicine">用药</Link><br/>
         <Link to="/archives">档案</Link><br/>
         <Link to="/remind">提醒</Link><br/>
+        <Link to="/message">常识</Link><br/>
       </div>
     );
   }

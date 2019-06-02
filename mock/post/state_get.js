@@ -3,6 +3,6 @@ module.exports = function () {
     "code": 0,
     "msg": "SUCCESS",
     "responseTime": "0.346s",
-    "data": 50
+    "data": '010100101010'
   }
 }

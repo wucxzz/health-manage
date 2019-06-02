@@ -23,11 +23,12 @@ export default class Information extends React.Component{
   }
 
   getMeseage = () => {
+    const msgList = document.getElementsByClassName('input');
     API.health.userInfo()
       .then(res => {
-        if (res.data.code === 0 && res.data.data) {
+        if (res.data.code == 0 && res.data.data.name) {
           const data = res.data.data;
-          const msgList = document.getElementsByClassName('input');
+          // const msgList = document.getElementsByClassName('input');
           msgList[0].value = data.name;
           msgList[1].value = data.idcard;
           msgList[2].value = data.address;
@@ -47,6 +48,8 @@ export default class Information extends React.Component{
             food: [data.food],
             date: new Date(year, mon - 1, day, 0, 0, 0)
           })
+        } else {
+          Toast.info('请输入个人信息!', 1.5);
         }
       })
       .catch(err => {
@@ -83,7 +86,6 @@ export default class Information extends React.Component{
         food: this.state.food[0],
         birthday: '' + value.getFullYear() + vmonth + vdate,
       }
-      console.log(param)
       API.health.userInfoUpdate(param)
         .then(res => {
           if (res.data.code == 0) {
@@ -107,21 +109,21 @@ export default class Information extends React.Component{
 
   render() {
     const maleData = [
-      {label: '男', value: 0},
-      {label: '女', value: 1}
+      {label: '男', value: '0'},
+      {label: '女', value: '1'}
     ];
     const foodData = [
-      {label: '正常', value: 0},
-      {label: '荤食为主', value: 1},
-      {label: '素食为主', value: 2},
-      {label: '嗜油', value: 3},
-      {label: '嗜盐', value: 4},
-      {label: '嗜糖', value: 5}
+      {label: '正常', value: '0'},
+      {label: '荤食为主', value: '1'},
+      {label: '素食为主', value: '2'},
+      {label: '嗜油', value: '3'},
+      {label: '嗜盐', value: '4'},
+      {label: '嗜糖', value: '5'}
     ];
     const healthData = [
-      {label: '健康', value: 0},
-      {label: '高血压', value: 1},
-      {label: '糖尿病', value: 2}
+      {label: '健康', value: '0'},
+      {label: '高血压', value: '1'},
+      {label: '糖尿病', value: '2'}
     ];
     return (
       <div className="information-layout">

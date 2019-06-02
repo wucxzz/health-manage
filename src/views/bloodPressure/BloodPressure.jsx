@@ -1,9 +1,10 @@
 import React from 'react'
 import '../common/common.less'
-import { DatePicker, List, Toast } from 'antd-mobile'
+import { DatePicker, List, Toast, Modal } from 'antd-mobile'
 import API from '../../components/httpAPI'
 import echarts from 'echarts'
 import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
+import Header from '../../components/base/Header/Header'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
@@ -13,21 +14,39 @@ if (minDate.getDate() !== maxDate.getDate()) {
   // set the minDate to the 0 of maxDate
   minDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
 }
+function closest(el, selector) {
+  const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
+  while (el) {
+    if (matchesSelector.call(el, selector)) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
 export default class BloodPressure extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
       date: now,
+      modal1: false,
+      texthigh: null,
+      textlow: null,
+      textheart: null,
     };
 
   }
 
   componentDidMount() {
-    this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
+    this.getDataToProcess();
+  }
+
+  getDataToProcess = () => {
     API.health.pressureGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -68,21 +87,6 @@ export default class BloodPressure extends React.Component{
         data: ['收缩压', '舒张压']
       },  
       grid: { left: 15, right: 30, bottom: 50, top: 40, containLabel: true, },
-      // 鼠标放在图标上对应点时，显示数据
-      // tooltip: { 
-      //   trigger: 'axis',  // 触发类型,axis坐标轴触发，主要在柱状图，折线图等会使用类目轴的图表中使用。
-      //   formatter: this.formatterCharts,
-      //   position: function (pos, params, dom, rect, size) {     // 提示框位置
-      //     // 鼠标在左侧时 tooltip 显示到右侧，鼠标在右侧时 tooltip 显示到左侧。
-      //     var obj = {top: 60};
-      //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
-      //     return obj;
-      //   },
-      //   textStyle: {
-      //     fontSize: 10
-      //   },
-      //   backgroundColor: 'rgba(0,0,0,.8)'
-      // },
       xAxis: {      // data需要设置 boundaryGap不能删，否则会在线两边留空白
         type: 'category', 
         boundaryGap : false, 
@@ -91,7 +95,7 @@ export default class BloodPressure extends React.Component{
         axisLabel: {
           textStyle: {
             fontSize: 10
-          }
+          },
         }
       }, 
       yAxis: { 
@@ -101,7 +105,7 @@ export default class BloodPressure extends React.Component{
         axisLabel: {
           textStyle: {
             fontSize: 10
-          }
+          },
         }
       },
       series: [],                       // 这个需要设置
@@ -117,9 +121,9 @@ export default class BloodPressure extends React.Component{
       useIndex.length = data.low.length;
       useIndex.index  = 'low';
     }
-    data[useIndex.index].forEach(e => { xAxisData.push(e.time) });
+    data[useIndex.index].forEach(e => { xAxisData.push(Number(e.time.substr(6, 2))) });
     // 处理每条数据
-    if (data.high) {  // 当前
+    if (data.high) {  // 收缩压
       const item  = {...seriesItem}
       item.name   = '收缩压';
       item.data   = [];
@@ -137,7 +141,7 @@ export default class BloodPressure extends React.Component{
       data.high.forEach( e => { item.data.push(e.num) })
       series.push(item)
     }
-    if (data.low) { // 环比
+    if (data.low) { // 舒张压
       const item  = {...seriesItem}
       item.name   = '舒张压';
       item.data   = [];
@@ -165,8 +169,9 @@ export default class BloodPressure extends React.Component{
   clickChoiceBtn = (type) => {
     API.health.pressureGet({timeType: type})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -199,7 +204,7 @@ export default class BloodPressure extends React.Component{
         .then(res => {
           if (res.data.code == 0) {
             Toast.info('保存成功!', 1);
-            this.cancel();
+            this.getDataToProcess();
           } else {
             console.error('传输数据失败！');
             Toast.fail('保存数据失败!', 3);
@@ -211,12 +216,12 @@ export default class BloodPressure extends React.Component{
         })
     }
   }
-
+  
   routeToTip = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/remind');
   }
   routeToFile = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/archives');
   }
   cancel = () => {
     let inpList = document.getElementsByClassName('input');
@@ -225,10 +230,52 @@ export default class BloodPressure extends React.Component{
     }
   }
 
+  showModal = key => (e) => {
+    e.preventDefault(); // 修复 Android 上点击穿透
+    let state = 1;
+    let inpList = document.getElementsByClassName('input');
+    for(var i = 0; i < inpList.length; i++) {
+      if (!inpList[i].value) {
+        Toast.fail('数据输入不正确!', 1);
+        state = 0;
+      }
+    }
+    if (state) {
+      let high = inpList[0].value;
+      let low = inpList[1].value;
+      let heart = inpList[2].value;
+      let texthigh, textlow, textheart;
+      high > 140 ? texthigh = '偏高' : high < 90 ? texthigh = '偏低' : texthigh = '正常';
+      low > 90 ? textlow = '偏高' : low < 60 ? textlow = '偏低' : textlow = '正常';
+      heart > 100 ? textheart = '偏高' : heart < 60 ? textheart = '偏低' : textheart = '正常';
+      this.setState({
+        [key]: true,
+        texthigh,
+        textlow,
+        textheart
+      });
+    }
+  }
+  onClose = key => () => {
+    this.setState({
+      [key]: false,
+    });
+  }
+  onWrapTouchStart = (e) => {
+    // fix touch to scroll background page on iOS
+    if (!/iPhone|iPod|iPad/i.test(navigator.userAgent)) {
+      return;
+    }
+    const pNode = closest(e.target, '.am-modal-content');
+    if (!pNode) {
+      e.preventDefault();
+    }
+  }
 
   render() {
     return (
       <div className="layout">
+        <Header data={'血压管理'}></Header>
         <div className="message-input">
           <DatePicker
             value={this.state.date}
@@ -251,7 +298,22 @@ export default class BloodPressure extends React.Component{
           <div className="button-wrap">
             <span className="button-item" onClick={this.cancel}>取消</span>
             <span onClick={this.savePressure}>保存</span>
-            <span className="analysis">血压分析</span>
+            <span className="analysis" onClick={this.showModal('modal1')}>血压分析</span>
+            <Modal
+              visible={this.state.modal1}
+              transparent
+              maskClosable={true}
+              onClose={this.onClose('modal1')}
+              title="血压分析"
+              footer={[{ text: '确定', onPress: () => { this.onClose('modal1')(); } }]}
+              wrapProps={{ onTouchStart: this.onWrapTouchStart }}
+            >
+              <div style={{ height: 70, overflow: 'scroll' }}>
+                收缩压：{this.state.texthigh}<br />
+                舒张压：{this.state.textlow}<br />
+                心率：{this.state.textheart}<br />
+              </div>
+            </Modal>
           </div>
           <div className="img-button">
             <span className="img-wrap" onClick={this.routeToTip}>

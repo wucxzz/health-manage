@@ -1,8 +1,11 @@
 import axios from 'axios';  // API访问接口
 import Jockey from './jockey';
-// let APIURL = '//test-bi.baijiahulian.com';
+let APIURL = 'http://59.110.237.168:8080';
+// let APIURL = '';
 let authToken = null;
-
+let requrl = window.location.href.split('?');
+let token = requrl[1];
+// let token = '121212121212267ae6369e46bf88490555141340e08a9ea87bac0e87f03c4293ebc5c9d7437'
 function getAuthToken () {
   return new Promise((resolve, reject) => {
     // 让APP设置 setAuthToken事件
@@ -30,7 +33,9 @@ function getAuthToken () {
 // 请求拦截（配置发送请求的信息）
 axios.interceptors.request.use(function (config){
   // 配置 请求头AuthToken
-  config.headers.AuthToken = authToken;
+  // config.headers.AuthToken = authToken;
+  config.headers.token = token; 
+  // config.headers.token = authToken;
    // 处理请求之前的配置
    return config;
    }, function (error){
@@ -45,78 +50,14 @@ axios.interceptors.request.use(function (config){
  */
 function wrap (func) {
   return function () {
-    if (authToken || process.env.NODE_ENV === 'development') {
-      // 如果有authToken 或 是本地开发，那么开始请求
-      return func.apply(null, arguments)
-    } else {
-      return getAuthToken().then(() => func.apply(null, arguments))
-    }
+    // if (authToken || process.env.NODE_ENV === 'development') {
+    //   // 如果有authToken 或 是本地开发，那么开始请求
+    //   return func.apply(null, arguments)
+    // } else {
+    //   return getAuthToken().then(() => func.apply(null, arguments))
+    // }
+    return func.apply(null, arguments)
   }
-}
-
-// 规则配置API
-const rule = {
-  /**
-   * 获取：业务线、一级品类、二级品类、三级品类列表
-   * API介绍地址：http://ewiki.baijiahulian.com/基础技术部/运营系统/BI/品类对应关系.md
-   * @param  {number} id   查询的ID
-   * @return {Promise}
-   */
-  getBusinessLine: wrap((id = 0) => {
-    const params = {
-      parentId: id
-    }
-    return axios.post('/relationInfo/getRelationList',params);
-  }),
-}
-
-// 数据统计API
-const statistics = {
-  /**
-   * 获取 统计收入详情 图表
-   * API介绍地址：http://ewiki.baijiahulian.com/基础平台部/运营系统/BI/统计/统计收入详情.md
-   * url: /statistics/getStatisticsDetail
-   * 方法：POST
-   * @param  {object} params   API需要的参数
-   * @return {Promise}
-   */
-  getStatisticsDetail: wrap(function(params) {
-      return axios.post('/statistics/getStatisticsDetail', params)
-  }),
-  
-  /**
-   * 获取 品类收入占比列表
-   * API介绍地址：http://ewiki.baijiahulian.com/基础平台部/运营系统/BI/统计/品类收入占比列表.md
-   * url: /statistics/getProportionList
-   * 方法：POST
-   * @param  {object} params   API需要的参数
-   * @return {Promise}
-   */
-  getProportionList: wrap( (params) => {
-    return axios.post('/statistics/getProportionList', params);
-  }),
-  /**
-   * 获取 获取数据最后更新时间
-   * url: /common/getRefreshTime.ajax
-   * 方法：POST
-   * @return {Promise}
-   */
-  getRefreshTime: wrap( () => {
-    return axios.post('/common/getRefreshTime.ajax');
-  }),
-}
-
-// 登陆信息、退出登陆接口
-const auth = {
-  /**
-   * 获取 获取用户登陆的信息
-   * url: /ac/getAuth.ajax
-   * 方法：POST
-   * @return {Promise}
-   */
-  getAuth: wrap( () => {
-    return axios.post('/ac/getAuth.ajax');
-  }),
 }
 
 // 获取每年每周日期列表接口
@@ -134,53 +75,85 @@ const common = {
 }
 
 const health = {
+  /**
+   * 保存 保存血压
+   * 方法：POST
+   * @param  {object} params   API需要的参数
+   * @return {Promise}
+   */
   pressureSave: wrap(function(params) {
-    return axios.post('/pressure/save', params)
+    const url = APIURL + '/pressure/save'
+    return axios.post(url, params)
   }),
   pressureGet: wrap(function(params) {
-    return axios.post('/pressure/get', params)
+    const url = APIURL + '/pressure/get'
+    return axios.post(url, params)
   }),
   heartGet: wrap(function(params) {
-    return axios.post('/heart/get', params)
+    const url = APIURL + '/heart/get'
+    return axios.post(url, params)
   }),
   sugarSave: wrap(function(params) {
-    return axios.post('/sugar/save', params)
+    const url = APIURL + '/sugar/save'
+    return axios.post(url, params)
   }),
   sugarGet: wrap(function(params) {
-    return axios.post('/sugar/get', params)
+    const url = APIURL + '/sugar/get'
+    return axios.post(url, params)
   }),
   weightSave: wrap(function(params) {
-    return axios.post('/weight/save', params)
+    const url = APIURL + '/weight/save'
+    return axios.post(url, params)
   }),
   weightGet: wrap(function(params) {
-    return axios.post('/weight/get', params)
+    const url = APIURL + '/weight/get'
+    return axios.post(url, params)
   }),
   exerciseSave: wrap(function(params) {
-    return axios.post('/exercise/save', params)
+    const url = APIURL + '/exercise/save'
+    return axios.post(url, params)
   }),
   exerciseGet: wrap(function(params) {
-    return axios.post('/exercise/get', params)
+    const url = APIURL + '/exercise/get'
+    return axios.post(url, params)
   }),
   yaoSave: wrap(function(params) {
-    return axios.post('/yao/save', params)
+    const url = APIURL + '/yao/save'
+    return axios.post(url, params)
   }),
   yaoGet: wrap(function(params) {
-    return axios.post('/yao/get')
+    const url = APIURL + '/yao/get'
+    return axios.post(url)
+  }),
+  yaoDelete: wrap(function(params) {
+    const url = APIURL + '/yao/delete'
+    return axios.post(url, params)
   }),
   userInfo: wrap(function(params) {
-    return axios.post('/user/info')
+    const url = APIURL + '/user/info'
+    return axios.post(url)
   }),
   userInfoUpdate: wrap(function(params) {
-    return axios.post('/user/info/update', params)
+    const url = APIURL + '/user/info/update'
+    return axios.post(url, params)
+  }),
+  stateGet: wrap(function(params) {
+    const url = APIURL + '/state/get'
+    return axios.post(url)
+  }),
+  stateSave: wrap(function(params) {
+    const url = APIURL + '/state/save'
+    return axios.post(url, params)
+  }),
+  getMessage: wrap(function(params) {
+    const url = APIURL + '/message'
+    return axios.get(url)
   }),
 }
 
 
 export default {
   axios,
-  rule,
-  statistics,
-  auth,
   common,
   health
 };

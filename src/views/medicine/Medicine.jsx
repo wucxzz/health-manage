@@ -1,6 +1,6 @@
 import React from 'react'
 import '../common/common.less'
-import { List, Toast, Picker, Card, WingBlank } from 'antd-mobile'
+import { List, Toast, Picker, Card, WingBlank, WhiteSpace } from 'antd-mobile'
 import API from '../../components/httpAPI'
 import data from '../common/data'
 
@@ -20,7 +20,7 @@ export default class Daily extends React.Component{
   componentDidMount() {
     API.health.yaoGet()
       .then(res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           this.yaodata = res.data.data;
           this.setState({
             cardHtml: this.setCardHtml()
@@ -33,8 +33,29 @@ export default class Daily extends React.Component{
       })
   }
 
-  deleteYao = (name) => {
-    console.log(name)
+  deleteYao = (yaoname) => {
+    let param = null;
+    if (!yaoname) {
+      Toast.fail('删除药物数据失败!', 3);
+    } else {
+      param = {
+        name: yaoname,
+      }
+      API.health.yaoDelete(param)
+        .then(res => {
+          if (res.data.code == 0) {
+            Toast.info('删除成功!', 1);
+            window.location.reload();
+          } else {
+            console.error('传输数据失败！');
+            Toast.fail('保存数据失败!', 3);
+          }
+        })
+        .catch(err => {
+          console.error('服务器出错，数据传输失败');
+          Toast.fail('服务器错误!', 2);
+        })
+    }
   }
 
   setCardHtml = () => {
@@ -43,7 +64,7 @@ export default class Daily extends React.Component{
     if (this.yaodata) {
       cardHtml = this.yaodata.map(data => {
         let unit;
-        switch (data.num % 10) {
+        switch (Number(data.num % 10)) {
           case 0:
           unit = '丸'
           break;
@@ -68,31 +89,31 @@ export default class Daily extends React.Component{
           default:
           unit = 'ml'
         }
-        let eatType;
-        switch (data.type) {
+        let eatType = '';
+        switch (Number(data.type)) {
           case 0:
-          eatType = '其他'
+          eatType = ''
           break;
           case 1:
-          eatType = '口服'
+          eatType = '口服，'
           break;
           case 2:
-          eatType = '含化'
+          eatType = '含化，'
           break;
           case 3:
-          eatType = '舌下给药'
+          eatType = '舌下给药，'
           break;
           case 4:
-          eatType = '咀嚼'
+          eatType = '咀嚼，'
           break;
           case 5:
-          eatType = '吸入'
+          eatType = '吸入，'
           break;
           case 6:
-          eatType = '外用'
+          eatType = '外用，'
           break;
           default:
-          eatType = '其他'
+          eatType = ''
         }
         return (
           <WingBlank size="md" key={data.name}>
@@ -103,7 +124,7 @@ export default class Daily extends React.Component{
               />
               <Card.Body>
                 <div>主治：{data.zhuzhi}</div>
-                <div>用法用量：{eatType}，每日{data.time}次，每次{Math.floor(data.num / 10) + unit}</div>
+                <div>用法用量：{eatType}每日{data.time}次，每次{Math.floor(data.num / 10) + unit}</div>
               </Card.Body>
               <Card.Footer extra={<div onClick={this.deleteYao.bind(this, data.name)}>删除</div>} />
             </Card>
@@ -120,9 +141,6 @@ export default class Daily extends React.Component{
   }
 
   yaoSave = () => {
-    console.log(this.state.dosage)
-    console.log(this.state.way)
-    console.log(this.state.times)
     let name = document.getElementsByClassName('med-input')[0].value;
     let num = this.state.dosage;
     let zhuzhi = document.getElementsByClassName('med-input')[1].value;
@@ -136,12 +154,12 @@ export default class Daily extends React.Component{
         num: '' + num[0] + num[1],
         type: this.state.way[0]
       }
-      console.log(param)
       API.health.yaoSave(param)
         .then(res => {
           if (res.data.code == 0) {
             Toast.info('保存成功!', 1);
             this.cancel();
+            window.location.reload();
           } else {
             console.error('传输数据失败！');
             Toast.fail('保存数据失败!', 3);
@@ -155,10 +173,10 @@ export default class Daily extends React.Component{
   }
 
   routeToTip = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/remind');
   }
   routeToFile = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/archives');
   }
   cancel = () => {
     let inpList = document.getElementsByClassName('med-input');
@@ -170,6 +188,7 @@ export default class Daily extends React.Component{
   render() {
     return (
       <div className="layout">
+        {/* <Header data={'用药管理'}></Header> */}
         <div className="medicine-add-title">
           <span>正在服用的药物</span>
         </div>
@@ -229,6 +248,8 @@ export default class Daily extends React.Component{
             </span>
           </div>
         </div>
+        <WhiteSpace size="lg" />
+        <WhiteSpace size="lg" />
       </div>
     );
   }

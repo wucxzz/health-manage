@@ -1,9 +1,10 @@
 import React from 'react'
 import '../common/common.less'
-import { DatePicker, List, Toast, Picker } from 'antd-mobile'
+import { DatePicker, List, Toast, Picker, Modal } from 'antd-mobile'
 import API from '../../components/httpAPI'
 import echarts from 'echarts'
 import ChoiceBtn from '../../components/base/ChoiceBtn/ChoiceBtn'
+import Header from '../../components/base/Header/Header'
 
 const nowTimeStamp = Date.now();
 const now = new Date(nowTimeStamp);
@@ -13,22 +14,38 @@ if (minDate.getDate() !== maxDate.getDate()) {
   // set the minDate to the 0 of maxDate
   minDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate());
 }
+function closest(el, selector) {
+  const matchesSelector = el.matches || el.webkitMatchesSelector || el.mozMatchesSelector || el.msMatchesSelector;
+  while (el) {
+    if (matchesSelector.call(el, selector)) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
 export default class BloodSugar extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
       date: now,
-      asyncValue: [1],
+      asyncValue: ['1'],
+      modal1: false,
+      textsugar: null,
     };
 
   }
 
   componentDidMount() {
-    this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
+    this.getDataToProcess();
+  }
+
+  getDataToProcess = () => {
     API.health.sugarGet({timeType: 0})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -69,21 +86,6 @@ export default class BloodSugar extends React.Component{
         data: ['血糖值']
       },  
       grid: { left: 15, right: 30, bottom: 50, top: 40, containLabel: true, },
-      // 鼠标放在图标上对应点时，显示数据
-      // tooltip: { 
-      //   trigger: 'axis',  // 触发类型,axis坐标轴触发，主要在柱状图，折线图等会使用类目轴的图表中使用。
-      //   formatter: this.formatterCharts,
-      //   position: function (pos, params, dom, rect, size) {     // 提示框位置
-      //     // 鼠标在左侧时 tooltip 显示到右侧，鼠标在右侧时 tooltip 显示到左侧。
-      //     var obj = {top: 60};
-      //     obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 5;
-      //     return obj;
-      //   },
-      //   textStyle: {
-      //     fontSize: 10
-      //   },
-      //   backgroundColor: 'rgba(0,0,0,.8)'
-      // },
       xAxis: {      // data需要设置 boundaryGap不能删，否则会在线两边留空白
         type: 'category', 
         boundaryGap : false, 
@@ -113,7 +115,7 @@ export default class BloodSugar extends React.Component{
     // 图表的每一个数据格式： { name: '', type: 'line', smooth: true, color: '', data: [] }
     const seriesItem = { type: 'line', }; // smooth: true 线是圆滑的
     // 处理X轴数据
-    data.forEach(e => { xAxisData.push(e.time) });
+    data.forEach(e => { xAxisData.push(e.time.substr(6, 2)) });
     // 处理每条数据
     if (data) {  // 当前
       const item  = {...seriesItem}
@@ -143,8 +145,9 @@ export default class BloodSugar extends React.Component{
   clickChoiceBtn = (type) => {
     API.health.sugarGet({timeType: type})
       .then( res => {
-        if (res.data.code === 0) {
+        if (res.data.code == 0) {
           // // 处理数据，同时渲染图表
+          this.chartsContainer = echarts.init(document.getElementById('echartsLine'));
           this.processDetailResult(res.data.data);
         } else {
           console.error('获取图表数据失败！');
@@ -174,7 +177,7 @@ export default class BloodSugar extends React.Component{
         .then(res => {
           if (res.data.code == 0) {
             Toast.info('保存成功!', 1);
-            this.cancel();
+            this.getDataToProcess();
           } else {
             console.error('传输数据失败！');
             Toast.fail('保存数据失败!', 3);
@@ -188,10 +191,10 @@ export default class BloodSugar extends React.Component{
   }
 
   routeToTip = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/remind');
   }
   routeToFile = () => {
-    this.props.history.push('/daily');
+    this.props.history.push('/archives');
   }
   cancel = () => {
     let inpList = document.getElementsByClassName('input');
@@ -200,20 +203,52 @@ export default class BloodSugar extends React.Component{
     }
   }
 
+  showModal = key => (e) => {
+    e.preventDefault(); // 修复 Android 上点击穿透
+    let sugar = document.getElementsByClassName('input')[0].value;
+    let textsugar;
+    if (!sugar) {
+      Toast.fail('数据输入不正确!', 1);
+    } else 
+    if (this.state.asyncValue === '1') {
+      sugar > 9.4 ? textsugar = '偏高' : sugar < 3.9 ? textsugar = '偏低' : textsugar = '正常';
+      this.setState({
+        [key]: true,
+        textsugar
+      });
+    } else {
+      sugar > 6.1 ? textsugar = '偏高' : sugar < 3.9 ? textsugar = '偏低' : textsugar = '正常';
+      this.setState({
+        [key]: true,
+        textsugar
+      });
+    }
+  }
+  onClose = key => () => {
+    this.setState({
+      [key]: false,
+    });
+  }
+  onWrapTouchStart = (e) => {
+    // fix touch to scroll background page on iOS
+    if (!/iPhone|iPod|iPad/i.test(navigator.userAgent)) {
+      return;
+    }
+    const pNode = closest(e.target, '.am-modal-content');
+    if (!pNode) {
+      e.preventDefault();
+    }
+  }
+
   render() {
     const timeData = [
-      {label: '凌晨', value: 0},
-      {label: '早饭前', value: 1},
-      {label: '早饭后', value: 2},
-      {label: '午饭前', value: 3},
-      {label: '午饭后', value: 4},
-      {label: '晚饭前', value: 5},
-      {label: '晚饭后', value: 6},
-      {label: '睡前', value: 7}
+      {label: '餐前', value: '0'},
+      {label: '餐后', value: '1'},
     ];
 
     return (
       <div className="layout">
+        <Header data={'血糖管理'}></Header>
         <div className="message-input">
           <DatePicker
             mode="date"
@@ -238,7 +273,20 @@ export default class BloodSugar extends React.Component{
           <div className="button-wrap">
             <span className="button-item" onClick={this.cancel}>取消</span>
             <span onClick={this.sugarSave}>保存</span>
-            <span className="analysis">血糖分析</span>
+            <span className="analysis" onClick={this.showModal('modal1')}>血糖分析</span>
+            <Modal
+              visible={this.state.modal1}
+              transparent
+              maskClosable={true}
+              onClose={this.onClose('modal1')}
+              title="血压分析"
+              footer={[{ text: '确定', onPress: () => { this.onClose('modal1')(); } }]}
+              wrapProps={{ onTouchStart: this.onWrapTouchStart }}
+            >
+              <div style={{ height: 50, overflow: 'scroll' }}>
+                血糖：{this.state.textsugar}<br />
+              </div>
+            </Modal>
           </div>
           <div className="img-button">
             <span className="img-wrap" onClick={this.routeToTip}>
