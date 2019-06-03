@@ -692,7 +692,7 @@ export default class BloodPressure extends React.Component{
           time: data.high[i].time,
           high: data.high[i].num,
           low: data.low[i].num,
-          maibo: data.maibo[i].num
+          maibo: data.maibo[i].maibo
         })
       }
       tbodyHtml = list.map(data => {
