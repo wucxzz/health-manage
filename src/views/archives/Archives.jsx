@@ -379,7 +379,7 @@ export default class BloodPressure extends React.Component{
   processDetailExercise = (data) => {
     const option = {
       title: {
-        text: '体重趋势',
+        text: '运动趋势',
         left: 'center',
         textStyle: {
           color: '#5F6ABA',
@@ -632,7 +632,7 @@ export default class BloodPressure extends React.Component{
         return (
           <tr key={data.time}>
             <td>{data.time}</td>
-            <td>{data.num}</td>
+            <td>{Number(data.num).toFixed(2)}</td>
           </tr>
         )
       })
@@ -661,7 +661,7 @@ export default class BloodPressure extends React.Component{
         return (
           <tr key={data.time}>
             <td>{data.time}</td>
-            <td>{data.num}</td>
+            <td>{Number(data.num).toFixed(1)}</td>
           </tr>
         )
       })
@@ -690,18 +690,18 @@ export default class BloodPressure extends React.Component{
       for (let i = 0; i < data.high.length; i++) {
         list.push({
           time: data.high[i].time,
-          high: data.high[i].num,
-          low: data.low[i].num,
-          maibo: data.maibo[i].maibo
+          high: Number(data.high[i].num),
+          low: Number(data.low[i].num),
+          maibo: Number(data.maibo[i].maibo)
         })
       }
       tbodyHtml = list.map(data => {
         return (
           <tr key={data.time}>
             <td className="process-tbody-time">{data.time}</td>
-            <td className="process-tbody">{data.high}</td>
-            <td className="process-tbody">{data.low}</td>
-            <td className="process-tbody">{data.maibo}</td>
+            <td className="process-tbody">{parseInt(data.high)}</td>
+            <td className="process-tbody">{parseInt(data.low)}</td>
+            <td className="process-tbody">{parseInt(data.maibo)}</td>
           </tr>
         )
       })

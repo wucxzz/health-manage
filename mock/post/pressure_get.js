@@ -6,7 +6,7 @@ module.exports = function () {
       "high": [
         {
             "time": "20190501",
-            "num": "150"
+            "num": "150.5656555656"
         },
         {
             "time": "20190502",
